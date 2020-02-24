@@ -6,11 +6,13 @@ import logging
 import sys,getopt
 import sqlite3
 
+import my_fastnetmon.config as config
+
 from my_fastnetmon.flows import *
 from my_fastnetmon.flowspec import *
+from my_fastnetmon.flowban import *
 from my_fastnetmon.exabgp import *
 from my_fastnetmon.database import *
-import my_fastnetmon.config as config
 
 logger = logging.getLogger("log")
 logger.setLevel(config.LOG_LEVEL)

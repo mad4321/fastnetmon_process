@@ -1,4 +1,4 @@
-__all__ = ['process_flows','process_unban','process_ban']
+__all__ = ['process_flows']
 
 import re
 import logging
@@ -9,6 +9,7 @@ from datetime import datetime
 import my_fastnetmon.exabgp as exabgp
 import my_fastnetmon.config as config
 from my_fastnetmon.database import *
+from my_fastnetmon.ipaddress import *
 
 logger = logging.getLogger("log")
 
@@ -21,8 +22,10 @@ TCP_SYN_FLOOD = 'TCP_SYN_FLOOD'
 # create blackhole rule from vars in 'flow
 #
 def create_rule_blackhole(flow):
+    dst_ip = flow.get('dst_ip') + '/32'
+    dst_subnet = get_subnet(flow.get('dst_ip'))
     rule = []
-    rule.extend(('route','destination',flow.get('dst_ip')+'/32'))
+    rule.extend(('route','destination',dst_ip))
     rule.extend(('community',config.BLACKHOLE_NEXTHOP));
     rule.extend(('community',config.BLACKHOLE_COMMUNITY));
     blackhole_rule = ' '.join(rule)
@@ -33,8 +36,10 @@ def create_rule_blackhole(flow):
 # create flowspec rule from vars in 'flow' with 'attack_type'
 #
 def create_rule_flow(flow,attack_type):
+    dst_ip = flow.get('dst_ip') + '/32'
+    dst_subnet = get_subnet(flow.get('dst_ip'))
     rule = []
-    rule.extend(('flow','route','destination',flow.get('dst_ip')+'/32'))
+    rule.extend(('flow','route','destination',dst_subnet))
     if (attack_type == GRE_FLOOD):
         rule.extend(('protocol','[ gre ]'))
     elif (attack_type == UDP_FLOOD):
@@ -71,60 +76,37 @@ def process_flows(flows):
 #        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
         if (pps > config.FLOW_BAN_PPS):
             attack_type = ''
+            dst_ip = flow.get('dst_ip')
             # GRE proto (src and dst port == 0)
             if (flow.get('src_ports').get(0) == 1 and flow.get('dst_ports').get(0) == 1):
                 attack_type = GRE_FLOOD
-                logger.info('Detect GRE/UDP flood to %s',flow.get('dst_ip'))
-                rules.append((flow.get('dst_ip'),create_rule_flow(flow,GRE_FLOOD),attack_type))
-                rules.append((flow.get('dst_ip'),create_rule_flow(flow,UDP_FLOOD),attack_type))
+                logger.info('Detect GRE/UDP flood to %s',dst_ip)
+                rules.append((dst_ip,create_rule_flow(flow,GRE_FLOOD),attack_type))
+                rules.append((dst_ip,create_rule_flow(flow,UDP_FLOOD),attack_type))
 
             # UDP flood
             elif (flow.get('protocol') == 'udp' and len(flow.get('src_ports')) == 1):
                 # DNS UDP flood set minimum packet len
                 attack_type = 'UDP_FLOOD_'+str(flow.get('src_ports').keys()[0])
                 if flow.get('src_ports').get(53) == 1:
-                    logger.info('Detect UDP DNS flood to %s',flow.get('dst_ip'))
-                    rules.append((flow.get('dst_ip'),create_rule_flow(flow,DNS_FLOOD),attack_type))
+                    logger.info('Detect UDP DNS flood to %s',dst_ip)
+                    rules.append((dst_ip,create_rule_flow(flow,DNS_FLOOD),attack_type))
                 else:
-                    logger.info('Detect UDP flood from port %d to %s',flow.get('src_ports').keys()[0],flow.get('dst_ip'))
-                    rules.append((flow.get('dst_ip'),create_rule_flow(flow,UDP_FLOOD),attack_type))
+                    logger.info('Detect UDP flood from port %d to %s',flow.get('src_ports').keys()[0],dst_ip)
+                    rules.append((dst_ip,create_rule_flow(flow,UDP_FLOOD),attack_type))
 
             # TCP syn flood
             elif (flow.get('protocol') == 'tcp' and flow.get('flags').get('syn') == 1):
                 attack_type = 'TCP_SYN_FLOOD_'+str(flow.get('dst_ports').keys()[0])
-                logger.info('Detect TCP syn flood to %s:%d',flow.get('dst_ip'),flow.get('dst_ports').keys()[0])
-                rules.append((flow.get('dst_ip'),create_rule_flow(flow,TCP_SYN_FLOOD),attack_type))
+                logger.info('Detect TCP syn flood to %s:%d',dst_ip,flow.get('dst_ports').keys()[0])
+                rules.append((dst_ip,create_rule_flow(flow,TCP_SYN_FLOOD),attack_type))
             else:
-                logger.info('Unknown attack %s:%d %d',flow.get('dst_ip'),flow.get('dst_ports').keys()[0],flow.get('src_ports').keys()[0])
+                logger.info('Unknown attack %s:%d %d',dst_ip,flow.get('dst_ports').keys()[0],flow.get('src_ports').keys()[0])
                 continue
 
         if (bps > config.FLOW_BAN_BPS):
-            logger.info('Detect HUGE traffic flood (%d) to %s. BLACKHOLE it',bps,flow.get('dst_ip'))
-            rules.append((flow.get('dst_ip'),create_rule_blackhole(flow),attack_type))
+            logger.info('Detect HUGE traffic flood (%d) to %s. BLACKHOLE it',bps,dst_ip)
+            rules.append((dst_ip,create_rule_blackhole(flow),attack_type))
             continue
 
     return rules
-
-#
-# process flowspec rules in exabgp
-#
-def process_ban(ip,rules):
-    for (ip,rule,attack_type) in rules:
-        logger.info("Process BAN ip:%s with:'%s'",ip,rule)
-        if (not config.EXABGP_DRYMODE):
-            exabgp.send_command('announce '+rule)
-        store_attack_host(ip,'',attack_type,rule)
-    return
-
-#
-# remove all rules for <ip> from exabgp
-#
-def process_unban(ip):
-    rules = get_attack_host(ip)
-    for (rule,) in rules:
-        logger.info("Process UNBAN ip:%s with:'%s'",ip,rule)
-        if (not config.EXABGP_DRYMODE):
-            exabgp.send_command('withdraw '+rule)
-    remove_attack_host(ip)
-    return
-

@@ -33,12 +33,6 @@ def get_attack_host(ip):
     c.execute("SELECT rule FROM 'host_attacks' WHERE ip = ?",[(ip)])
     return c.fetchall()
 
-def remove_attack_network(network):
-    return
-
-def get_attack_network(network):
-    return
-
-def store_attack_network(network):
-    return
-
+def get_attack_rule(rule):
+    c.execute("SELECT rule FROM 'host_attacks' WHERE rule = ?",[(rule)])
+    return c.fetchall()
