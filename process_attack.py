@@ -6,9 +6,13 @@ import logging
 import sys,getopt
 import sqlite3
 
-from my_fastnetmon.flows import *
-from my_fastnetmon.exabgp import *
 import my_fastnetmon.config as config
+
+from my_fastnetmon.flows import *
+from my_fastnetmon.flowspec import *
+from my_fastnetmon.flowban import *
+from my_fastnetmon.exabgp import *
+from my_fastnetmon.database import *
 
 logger = logging.getLogger("log")
 logger.setLevel(config.LOG_LEVEL)
@@ -18,6 +22,8 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 if __name__ == '__main__':
+
+    init_db()
 
     if len(sys.argv)<5:
         sys.exit(2)
@@ -31,7 +37,7 @@ if __name__ == '__main__':
     if (attack_action == "attack_details"):
         (main,flows) = process_details(sys.stdin.readlines())
         rules = process_flows(flows)
-        process_ban(rules)
+        process_ban(attack_ip,rules)
         exit(0)
 
     if (attack_action == "ban"):
