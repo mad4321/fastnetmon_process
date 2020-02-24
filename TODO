@@ -19,12 +19,18 @@ grouping attacks
    if count of specific host attack with same type is zero,
    then remove summary network flowspec rule
 
+
+New Idea
 ------------
 1) create rule for /24
 2) store id db dst_ip, flow rule
 
-when unban ip
+3) when unban ip
+get and remove rules from db for this ip
 foreach rule for this ip
-if count of same rules =1
-then unban rule
-remove rule from db for this ip
+    if count of same rules == 0
+    then unban rule
+
+
+1),2),3) DONE
+

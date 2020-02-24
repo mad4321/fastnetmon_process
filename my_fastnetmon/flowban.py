@@ -30,8 +30,12 @@ def process_unban(ip):
     rules = get_attack_host(ip)
     remove_attack_host(ip)
     for (rule,) in rules:
-        logger.info("Process UNBAN ip:%s with:'%s'",ip,rule)
-        if (not config.EXABGP_DRYMODE):
-            exabgp.send_command('withdraw '+rule)
+        rule_count = get_attack_rules_count(rule)
+        if (rule_count == 0):
+            logger.info("Process UNBAN ip:%s with:'%s'",ip,rule)
+            if (not config.EXABGP_DRYMODE):
+                exabgp.send_command('withdraw '+rule)
+        else:
+            logger.info("There is another BAN rule '%s' for %s network",rule,ip)
     return
 

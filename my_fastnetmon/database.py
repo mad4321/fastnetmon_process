@@ -1,4 +1,4 @@
-__all__ = ['init_db','store_attack_host','remove_attack_host','get_attack_host']
+__all__ = ['init_db','store_attack_host','remove_attack_host','get_attack_host','get_attack_rules_count']
 
 import sqlite3
 import logging
@@ -33,6 +33,6 @@ def get_attack_host(ip):
     c.execute("SELECT rule FROM 'host_attacks' WHERE ip = ?",[(ip)])
     return c.fetchall()
 
-def get_attack_rule(rule):
-    c.execute("SELECT rule FROM 'host_attacks' WHERE rule = ?",[(rule)])
-    return c.fetchall()
+def get_attack_rules_count(rule):
+    c.execute("SELECT count(rule) FROM 'host_attacks' WHERE rule = ?",[(rule)])
+    return c.fetchone()[0]
