@@ -18,6 +18,18 @@ DNS_FLOOD     = 'DNS_FLOOD'
 TCP_SYN_FLOOD = 'TCP_SYN_FLOOD'
 
 #
+# create blackhole rule from vars in 'flow
+#
+def create_rule_blackhole(flow):
+    rule = []
+    rule.extend(('route','destination',flow.get('dst_ip')+'/32'))
+    rule.extend(('community',config.BLACKHOLE_NEXTHOP));
+    rule.extend(('community',config.BLACKHOLE_COMMUNITY));
+    blackhole_rule = ' '.join(rule)
+    logger.debug("Generate rule '%s'",blackhole_rule)
+    return blackhole_rule;
+
+#
 # create flowspec rule from vars in 'flow' with 'attack_type'
 #
 def create_rule_flow(flow,attack_type):
@@ -56,7 +68,7 @@ def process_flows(flows):
             seconds = 1
         pps = flow.get('packets')/seconds
         bps = flow.get('octets')/seconds*8
-        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
+#        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
         if (pps > config.FLOW_BAN_PPS):
             attack_type = ''
             # GRE proto (src and dst port == 0)
@@ -85,12 +97,18 @@ def process_flows(flows):
             else:
                 logger.info('Unknown attack %s:%d %d',flow.get('dst_ip'),flow.get('dst_ports').keys()[0],flow.get('src_ports').keys()[0])
                 continue
+
+        if (bps > config.FLOW_BAN_BPS):
+            logger.info('Detect HUGE traffic flood (%d) to %s. BLACKHOLE it',bps,flow.get('dst_ip'))
+            rules.append((flow.get('dst_ip'),create_rule_blackhole(flow),attack_type))
+            continue
+
     return rules
 
 #
 # process flowspec rules in exabgp
 #
-def process_ban(rules):
+def process_ban(ip,rules):
     for (ip,rule,attack_type) in rules:
         logger.info("Process BAN ip:%s with:'%s'",ip,rule)
         if (not config.EXABGP_DRYMODE):
