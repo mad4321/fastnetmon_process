@@ -1,0 +1,30 @@
+grouping attacks
+
+1) store attack in db
+      - dst ip
+      - dst ip network (/24) zero last octet
+      - attack type (greflood, udpflood_port, tcpsynflood_port,...)
+      - flowspec rule
+      - datetime
+
+2) if more than three (3) same attacks in same network
+   then generate summary network flowspec rule (replace ip with network)
+
+3) continue to store per ip attacks with same type
+
+4) when receive unban message
+   remove rules from this ip from db and remove flowspec from bgp
+
+5) check for every summary network attack
+   if count of specific host attack with same type is zero,
+   then remove summary network flowspec rule
+
+------------
+1) create rule for /24
+2) store id db dst_ip, flow rule
+
+when unban ip
+foreach rule for this ip
+if count of same rules =1
+then unban rule
+remove rule from db for this ip

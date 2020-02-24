@@ -14,8 +14,16 @@
 #exit 0
 
 #ban ip 
-#cat /var/log/fastnetmon_attacks/91.241.166.26_23_02_20_11:32:35 | ./process_attack.py 91.241.166.92 incoming 111111 attack_details
+#91.241.166.211_23_02_20_10:19:31
+#91.241.166.40_23_02_20_10:19:51
+#91.241.166.60_23_02_20_10:20:51
+#91.241.166.60_23_02_20_10:51:18
+#91.241.166.27_23_02_20_11:27:49
+#91.241.166.25_23_02_20_11:32:35
+#91.241.166.26_23_02_20_11:32:35
+cat /var/log/fastnetmon_attacks/31.135.177.4_24_02_20_06:14:03 | ./process_attack.py 91.241.166.92 incoming 111111 attack_details
+#cat /var/log/fastnetmon_attacks/old/31.135.177.10_19_02_20_12:16:23 | ./process_attack.py 91.241.166.92 incoming 111111 attack_details
 
 #sleep 1
 #unban ip 
-cat /var/log/fastnetmon_attacks/91.241.166.92_21_02_20_10:58:12 | ./process_attack.py 91.241.166.26 incoming 111111 unban
+#cat /var/log/fastnetmon_attacks/91.241.166.92_21_02_20_10:58:12 | ./process_attack.py 91.241.166.92 incoming 111111 unban
