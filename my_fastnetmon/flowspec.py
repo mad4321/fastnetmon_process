@@ -25,7 +25,7 @@ def create_rule_blackhole(flow):
     dst_ip = flow.get('dst_ip') + '/32'
     dst_subnet = get_subnet(flow.get('dst_ip'))
     rule = []
-    rule.extend(('route','destination',dst_ip))
+    rule.extend(('route',dst_ip))
     rule.extend(('community',config.BLACKHOLE_NEXTHOP));
     rule.extend(('community',config.BLACKHOLE_COMMUNITY));
     blackhole_rule = ' '.join(rule)
