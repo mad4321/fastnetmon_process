@@ -34,3 +34,7 @@ foreach rule for this ip
 
 1),2),3) DONE
 
+--------------
+config from file
+
+add custom params for network/host
