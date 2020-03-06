@@ -26,8 +26,8 @@ def create_rule_blackhole(flow):
     dst_subnet = get_subnet(flow.get('dst_ip'))
     rule = []
     rule.extend(('route',dst_ip))
-    rule.extend(('community',config.BLACKHOLE_NEXTHOP));
-    rule.extend(('community',config.BLACKHOLE_COMMUNITY));
+    rule.extend(('next-hop',config.get('BLACKHOLE_NEXTHOP')));
+    rule.extend(('community',config.get('BLACKHOLE_COMMUNITY')));
     blackhole_rule = ' '.join(rule)
     logger.debug("Generate rule '%s'",blackhole_rule)
     return blackhole_rule;
@@ -55,7 +55,7 @@ def create_rule_flow(flow,attack_type):
         rule.extend(('tcp-flags','[ syn ]'))
     else:
          return ''
-    rule.extend(('community',config.FLOW_COMMUNITY));
+    rule.extend(('community',config.get('FLOW_COMMUNITY')));
     rule.extend(('rate-limit','0'));
     flowspec_rule = ' '.join(rule)
     logger.debug("Generate rule '%s'",flowspec_rule)
@@ -73,8 +73,8 @@ def process_flows(flows):
             seconds = 1
         pps = flow.get('packets')/seconds
         bps = flow.get('octets')/seconds*8
-#        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
-        if (pps > config.FLOW_BAN_PPS):
+        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
+        if (pps > config.get('FLOW_BAN_PPS')):
             attack_type = ''
             dst_ip = flow.get('dst_ip')
             # GRE proto (src and dst port == 0)
@@ -85,7 +85,7 @@ def process_flows(flows):
                 rules.append((dst_ip,create_rule_flow(flow,UDP_FLOOD),attack_type))
 
             # UDP flood
-            elif (flow.get('protocol') == 'udp' and len(flow.get('src_ports')) == 1):
+            elif (flow.get('protocol') == 'udp' and len(flow.get('src_ports')) == 1 and pps > config.get('UDP_FLOOD_PPS')):
                 # DNS UDP flood set minimum packet len
                 attack_type = 'UDP_FLOOD_'+str(flow.get('src_ports').keys()[0])
                 if flow.get('src_ports').get(53) == 1:
@@ -96,7 +96,7 @@ def process_flows(flows):
                     rules.append((dst_ip,create_rule_flow(flow,UDP_FLOOD),attack_type))
 
             # TCP syn flood
-            elif (flow.get('protocol') == 'tcp' and flow.get('flags').get('syn') == 1):
+            elif (flow.get('protocol') == 'tcp' and flow.get('flags').get('syn') == 1 and pps > config.get('TCP_SYN_FLOOD_PPS')):
                 attack_type = 'TCP_SYN_FLOOD_'+str(flow.get('dst_ports').keys()[0])
                 logger.info('Detect TCP syn flood to %s:%d',dst_ip,flow.get('dst_ports').keys()[0])
                 rules.append((dst_ip,create_rule_flow(flow,TCP_SYN_FLOOD),attack_type))
@@ -104,7 +104,7 @@ def process_flows(flows):
                 logger.info('Unknown attack %s:%d %d',dst_ip,flow.get('dst_ports').keys()[0],flow.get('src_ports').keys()[0])
                 continue
 
-        if (bps > config.FLOW_BAN_BPS):
+        if (bps > config.get('FLOW_BAN_BPS')):
             logger.info('Detect HUGE traffic flood (%d) to %s. BLACKHOLE it',bps,dst_ip)
             rules.append((dst_ip,create_rule_blackhole(flow),attack_type))
             continue

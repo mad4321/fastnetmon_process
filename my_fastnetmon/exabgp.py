@@ -7,7 +7,7 @@ logger = logging.getLogger("log")
 
 def send_command(rule):
     try:
-        f = open(config.EXABGP_PIPE,"w")
+        f = open(config.get('EXABGP_PIPE'),"w")
         f.write(rule+"\n")
         f.close()
         return 0

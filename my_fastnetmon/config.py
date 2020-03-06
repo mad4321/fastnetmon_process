@@ -1,24 +1,33 @@
 import logging
+import os,sys
+import yaml
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 program_name='process_attack'
-program_version='1.1'
+program_version='1.2'
 
-HOME_DIR = '/var/log/fastnetmon_attacks'
+def load_config(config_file):
+    try:
+        with open(config_file,'r') as file:
+            try:
+                config = yaml.load(file,Loader=yaml.Loader)
+                return config
+            except yaml.YAMLError as err:
+                loggign.error('Read config error: %s',err)
+                sys.exit(2)
+    except (OSError, IOError) as err:
+        logging.error('File error: %s',err)
+        sys.exit(2)
 
-LOG_FILE  = HOME_DIR+'/attack_dev.log'
-LOG_FILE  = '/dev/stdout'
-LOG_LEVEL = logging.DEBUG
+base_path = os.path.dirname(sys.argv[0])
+config = load_config(base_path + '/config.yml')
+config_ip = ''
 
-EXABGP_PIPE='/tmp/exabgp_flow.cmd'
-EXABGP_DRYMODE = True
+def set_config_ip(ip):
+    config_ip=ip
 
-BLACKHOLE_COMMUNITY = '6768:6660'
-BLACKHOLE_NEXTHOP   = '10.66.66.66'
-FLOW_COMMUNITY = '6768:9990'
-DATA_DIR = HOME_DIR
-BAN_FILENAME = 'ban_rule_ip_'
-
-FLOW_BAN_PPS = 100000
-FLOW_BAN_BPS = 1000000000 #1Gbps
-
-SQLITE_DB = HOME_DIR+'/process_attack.db'
+def get(param):
+    return config.get(param)

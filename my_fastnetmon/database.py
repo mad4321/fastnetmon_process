@@ -1,4 +1,4 @@
-__all__ = ['init_db','store_attack_host','remove_attack_host','get_attack_host','get_attack_rules_count']
+__all__ = ['init_db','store_attack_host','remove_attack_host','get_attack_host','get_attack_rules_count','get_all_bans']
 
 import sqlite3
 import logging
@@ -6,7 +6,7 @@ import my_fastnetmon.config as config
 
 logger = logging.getLogger("log")
 
-conn = sqlite3.connect(config.SQLITE_DB)
+conn = sqlite3.connect(config.get('SQLITE_DB'))
 c = conn.cursor()
 
 def init_db():
@@ -36,3 +36,7 @@ def get_attack_host(ip):
 def get_attack_rules_count(rule):
     c.execute("SELECT count(rule) FROM 'host_attacks' WHERE rule = ?",[(rule)])
     return c.fetchone()[0]
+
+def get_all_bans():
+    c.execute("SELECT DISTINCT ip FROM 'host_attacks'")
+    return c.fetchall()

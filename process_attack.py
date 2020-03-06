@@ -14,12 +14,17 @@ from my_fastnetmon.flowban import *
 from my_fastnetmon.exabgp import *
 from my_fastnetmon.database import *
 
+program_name='process_attack'
+program_version='1.2'
+
 logger = logging.getLogger("log")
-logger.setLevel(config.LOG_LEVEL)
+logger.setLevel(config.get('LOG_LEVEL'))
 formatter = logging.Formatter("%(asctime)s - [%(process)d]:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d - %(message)s")
-handler = logging.FileHandler(config.LOG_FILE)
+handler = logging.FileHandler(config.get('LOG_FILE'))
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+logger.debug("Start")
 
 if __name__ == '__main__':
 
@@ -37,17 +42,17 @@ if __name__ == '__main__':
     if (attack_action == "attack_details"):
         (main,flows) = process_details(sys.stdin.readlines())
         rules = process_flows(flows)
-        process_ban(attack_ip,rules)
-        exit(0)
+        ret = process_ban(attack_ip,rules)
+        sys.exit(ret)
 
     if (attack_action == "ban"):
-        exit(0)
+        sys.exit(0)
 
     if (attack_action == "unban"):
-        process_unban(attack_ip)
-        exit(0)
+        ret = process_unban(attack_ip)
+        sys.exit(ret)
 
-    exit(0);
+    sys.exit(2);
 
-exit(1)
+sys.exit(2)
 
