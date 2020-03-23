@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess
+import sys
 
 test_files1 = [
 (False,'185.41.23.154_24_02_20_14:34:26')]
@@ -262,6 +263,9 @@ test_files = [
 (True,'91.241.166.9_24_02_20_08:42:35'),
 (True,'91.241.166.9_25_02_20_17:26:41'),
 (True,'91.241.166.93_24_02_20_00:08:36')]
+
+test_files = [
+(True,'91.241.166.79_23_03_20_21:51:49')]
 
 test_path = '/var/log/fastnetmon_attacks/'
 

@@ -2,8 +2,8 @@
 HOME_DIR:  '/var/log/fastnetmon_attacks'
 DATA_DIR:  '/var/log/fastnetmon_attacks'
 SQLITE_DB: '/var/log/fastnetmon_attacks/process_attack.db'
-#LOG_FILE:  '/dev/stdout'
-LOG_FILE:  '/var/log/fastnetmon_attacks/debug.log'
+LOG_FILE:  '/dev/stdout'
+#LOG_FILE:  '/var/log/fastnetmon_attacks/debug.log'
 LOG_LEVEL: DEBUG
 EXABGP_PIPE: '/tmp/exabgp_flow.cmd'
 EXABGP_DRYMODE: True

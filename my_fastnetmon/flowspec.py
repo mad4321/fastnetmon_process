@@ -73,9 +73,9 @@ def process_flows(flows):
             seconds = 1
         pps = flow.get('packets')/seconds
         bps = flow.get('octets')/seconds*8
-        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
+#        logger.debug("FLOW packets %d start time %s - end time %s: PPS:%d BPS:%d",flow.get('packets'),flow.get('start_datetime').strftime('%s'),flow.get('end_datetime').strftime('%s'),pps,bps)
+        attack_type = ''
         if (pps > config.get('FLOW_BAN_PPS')):
-            attack_type = ''
             dst_ip = flow.get('dst_ip')
             # GRE proto (src and dst port == 0)
             if (flow.get('src_ports').get(0) == 1 and flow.get('dst_ports').get(0) == 1):
@@ -104,7 +104,7 @@ def process_flows(flows):
                 logger.info('Unknown attack %s:%d %d',dst_ip,flow.get('dst_ports').keys()[0],flow.get('src_ports').keys()[0])
                 continue
 
-        if (bps > config.get('FLOW_BAN_BPS')):
+        if (bps > config.get('FLOW_BAN_BPS') and attack_type):
             logger.info('Detect HUGE traffic flood (%d) to %s. BLACKHOLE it',bps,dst_ip)
             rules.append((dst_ip,create_rule_blackhole(flow),attack_type))
             continue
